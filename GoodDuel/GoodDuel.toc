@@ -1,0 +1,10 @@
+## Interface: 16001
+## Title: Good Duel
+## Notes: Says "gl hf" when a duel starts and "gd" when it ends.
+## Version: 1.0.0
+## IconTexture: Interface\Icons\Ability_Warrior_Challange
+## Category: Chat & Communication
+## X-Curse-Project-ID: 1743367
+## X-Website: https://github.com/eahii/GoodDuel
+
+GoodDuel.lua
