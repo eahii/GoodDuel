@@ -4,7 +4,17 @@
 
 A tiny World of Warcraft: Forever addon that says **gl hf** in /say when a duel
 starts (the 3-2-1 countdown) and **gd** when the duel ends. Nothing is said on
-declined requests. No settings, no slash commands.
+declined requests.
+
+## Custom messages
+
+Open **Esc → Options → AddOns → Good Duel** (or type `/goodduel`) and edit the duel
+start and end messages. Changes save as you type and are shared by all your
+characters. Leave a field empty to say nothing at that point; **Reset to defaults**
+brings back "gl hf" and "gd".
+
+Line breaks and `|` characters are removed before sending (`|` starts WoW's color and
+link codes), and messages are capped at chat's 255-byte limit.
 
 ## How it sends /say
 
@@ -25,5 +35,6 @@ Copy the `GoodDuel` folder to `World of Warcraft\_classic_beta_\Interface\AddOns
 
 - `GoodDuel/GoodDuel.toc` – addon manifest (`## Interface: 16001` for the Forever beta)
 - `GoodDuel/GoodDuel.lua` – the addon
+- `GoodDuel/Options.lua` – the Options panel and `/goodduel`
 - `assets/logo.png` – CurseForge project logo
 - `build.sh` – builds `dist/GoodDuel-<version>.zip` for upload

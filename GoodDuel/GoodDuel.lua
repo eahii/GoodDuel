@@ -1,7 +1,10 @@
-local START_TEXT = "gl hf"
-local END_TEXT = "gd"
+local addonName, ns = ...
+
+ns.DEFAULTS = { startText = "gl hf", endText = "gd" }
+
 local PENDING_MAX_AGE = 20
 local COUNTDOWN_SECONDS = 3
+local MAX_MESSAGE_BYTES = 255
 
 local SendChat = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
 
@@ -39,7 +42,27 @@ capture:SetScript("OnKeyDown", flush)
 capture:SetScript("OnKeyUp", flush)
 WorldFrame:HookScript("OnMouseDown", flush)
 
-local function say(text)
+-- "|" starts a WoW escape code (|c, |H, |T); a malformed one gets the message dropped or errors
+local function clean(text)
+	if type(text) ~= "string" then
+		return nil
+	end
+	text = text:gsub("[%c|]", ""):match("^%s*(.-)%s*$")
+	if #text > MAX_MESSAGE_BYTES then
+		-- the cut may split a multibyte character, so drop the last one whole
+		text = text:sub(1, MAX_MESSAGE_BYTES):gsub("[\192-\255][\128-\191]*$", "")
+	end
+	if text == "" then
+		return nil
+	end
+	return text
+end
+
+local function say(rawText)
+	local text = clean(rawText)
+	if not text then
+		return
+	end
 	pending[#pending + 1] = { text = text, queuedAt = GetTime() }
 	capture:Show()
 end
@@ -47,25 +70,36 @@ end
 local duelStartedAt = nil
 
 local events = CreateFrame("Frame")
+events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("CHAT_MSG_SYSTEM")
 events:RegisterEvent("DUEL_FINISHED")
 events:SetScript("OnEvent", function(_, event, text)
-	if event == "CHAT_MSG_SYSTEM" then
+	if event == "ADDON_LOADED" then
+		if text == addonName then
+			GoodDuelDB = GoodDuelDB or {}
+			-- only nil gets the default: "" means the player turned that message off
+			for key, value in pairs(ns.DEFAULTS) do
+				if GoodDuelDB[key] == nil then
+					GoodDuelDB[key] = value
+				end
+			end
+			events:UnregisterEvent("ADDON_LOADED")
+		end
+	elseif event == "CHAT_MSG_SYSTEM" then
 		if issecretvalue and issecretvalue(text) then
 			return
 		end
 		if not duelStartedAt and type(text) == "string" and text:match(countdownPattern) then
 			duelStartedAt = GetTime()
-			say(START_TEXT)
+			say(GoodDuelDB.startText)
 		end
 	elseif event == "DUEL_FINISHED" and duelStartedAt then
 		local fought = GetTime() - duelStartedAt >= COUNTDOWN_SECONDS
 		duelStartedAt = nil
 		pending = {}
+		capture:Hide()
 		if fought then
-			say(END_TEXT)
-		else
-			capture:Hide()
+			say(GoodDuelDB.endText)
 		end
 	end
 end)
